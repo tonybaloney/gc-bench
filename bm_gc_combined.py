@@ -7,8 +7,7 @@ SIG_DICT = 0xd1c7 # Create new dictionary
 SIG_LIST = 0x7157 # Create new list
 
 
-def benchmark(depth=1000) -> float:
-    t0 = pyperf.perf_counter()
+def manipulate_tree(depth=1000):
     # Build tree
     root = {}
     current = root
@@ -95,6 +94,12 @@ def benchmark(depth=1000) -> float:
 
     # Now delete the root
     del root
+
+
+def benchmark(loops: int) -> float:
+    t0 = pyperf.perf_counter()
+    for _ in range(loops):
+        manipulate_tree()
 
     return pyperf.perf_counter() - t0
 
