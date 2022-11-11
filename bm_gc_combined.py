@@ -6,7 +6,7 @@ import pyperf
 SIG_DICT = 0xd1c7 # Create new dictionary
 SIG_LIST = 0x7157 # Create new list
 
-def benchmark(depth=1000, max_width=10) -> float:
+def benchmark(depth=1000) -> float:
     t0 = pyperf.perf_counter()
     # Build tree
     root = {}
@@ -14,12 +14,13 @@ def benchmark(depth=1000, max_width=10) -> float:
     level = 0
 
     # Cycle through this list of values for each item in the tree
-    values = cycle([0., 0, SIG_LIST, SIG_DICT, None, ()])
+    POSSIBLE_VALUES = [0., 0, SIG_LIST, SIG_DICT, None, ()]
+    values = cycle(POSSIBLE_VALUES)
     # Keep a master unique key for each item in the tree
     index = count()
 
     while level < depth:
-        for _ in range(max_width):
+        for _ in range(len(POSSIBLE_VALUES)):
             new_value = next(values)
             new_key = next(index)
             if new_value is SIG_LIST:
@@ -47,7 +48,6 @@ def benchmark(depth=1000, max_width=10) -> float:
             all_items.append((key, value))
         level += 1
 
-    # pprint(root, depth=5)
 
     # Traverse and add the all_items to every list in the tree
     current = root
@@ -83,11 +83,18 @@ def benchmark(depth=1000, max_width=10) -> float:
     while level < depth:
         for key, value in current.items():
             if isinstance(value, dict):
-                current = value
-            else:
                 del current[key]
+                current = value
                 break
         level += 1
+    # pprint(root, depth=5)
+
+    # Clear the all items list
+    all_items.clear()
+
+    # Now delete the root
+    del root
+
     return pyperf.perf_counter() - t0
 
 if __name__ == "__main__":
