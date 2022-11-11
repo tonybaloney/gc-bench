@@ -3,22 +3,28 @@ from itertools import count, cycle
 import gc
 import pyperf
 
-SIG_DICT = 0xd1c7
+SIG_DICT = 0xd1c7 # Create new dictionary
+SIG_LIST = 0x7157 # Create new list
 
-def benchmark(depth=100, max_width=10) -> float:
+def benchmark(depth=1000, max_width=10) -> float:
     t0 = pyperf.perf_counter()
     # Build tree
     root = {}
     current = root
     level = 0
-    values = cycle([0., 0, [], SIG_DICT, None, ()])
+
+    # Cycle through this list of values for each item in the tree
+    values = cycle([0., 0, SIG_LIST, SIG_DICT, None, ()])
+    # Keep a master unique key for each item in the tree
     index = count()
+
     while level < depth:
         for _ in range(max_width):
             new_value = next(values)
             new_key = next(index)
-
-            if new_value == SIG_DICT:
+            if new_value is SIG_LIST:
+                current[new_key] = []
+            elif new_value == SIG_DICT:
                 new_value = dict()
                 current[new_key] = new_value
                 current = new_value
@@ -28,9 +34,22 @@ def benchmark(depth=100, max_width=10) -> float:
                 current[new_key] = new_value
         level += 1
 
-    # pprint(root)
+    # pprint(root, depth=5)
     
-    # Traverse and add the parent to every list in the tree
+    # Traverse tree and add every item to a list with a tuple (k,v)
+    all_items = []
+    current = root
+    level = 0
+    while level < depth:
+        for key, value in current.items():
+            if isinstance(value, dict):
+                current = value
+            all_items.append((key, value))
+        level += 1
+
+    # pprint(root, depth=5)
+
+    # Traverse and add the all_items to every list in the tree
     current = root
     level = 0
     while level < depth:
@@ -39,10 +58,11 @@ def benchmark(depth=100, max_width=10) -> float:
                 current = value
                 break
             elif isinstance(value, list):
-                value.append(current)
+                value.append(all_items)
         level += 1
 
-    # pprint(root)
+    # pprint(root, depth=5)
+
     # Now pop the parent from every list in the tree
     current = root
     level = 0
@@ -54,7 +74,7 @@ def benchmark(depth=100, max_width=10) -> float:
             elif isinstance(value, list):
                 value.pop()
         level += 1
-    # pprint(root)
+    # pprint(root, depth=5)
 
     # Now go through and remove every key containing a dictionary
     # to break the dictionary cycles
@@ -68,7 +88,6 @@ def benchmark(depth=100, max_width=10) -> float:
                 del current[key]
                 break
         level += 1
-    # pprint(all_dicts)
     return pyperf.perf_counter() - t0
 
 if __name__ == "__main__":
@@ -83,5 +102,3 @@ if __name__ == "__main__":
     runner.bench_time_func('bm_gc_combined_5000_g0', benchmark)
     gc.disable()
     runner.bench_time_func('bm_gc_combined_disabled', benchmark)
-
-
