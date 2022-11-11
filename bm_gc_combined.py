@@ -6,6 +6,7 @@ import pyperf
 SIG_DICT = 0xd1c7 # Create new dictionary
 SIG_LIST = 0x7157 # Create new list
 
+
 def benchmark(depth=1000) -> float:
     t0 = pyperf.perf_counter()
     # Build tree
@@ -101,11 +102,21 @@ if __name__ == "__main__":
     runner = pyperf.Runner()
     runner.metadata['description'] = "Benchmark for garbage collection"
     gc.collect()
+    runner.bench_time_func('bm_gc_combined_defaults', benchmark)
+
     gc.set_threshold(50, 10, 10)
+    gc.collect()
+
     runner.bench_time_func('bm_gc_combined_50_g0', benchmark)
+
     gc.set_threshold(700, 10, 10)
+    gc.collect()
     runner.bench_time_func('bm_gc_combined_700_g0', benchmark)
+
     gc.set_threshold(5000, 10, 10)
+    gc.collect()
     runner.bench_time_func('bm_gc_combined_5000_g0', benchmark)
+
+    gc.collect()
     gc.disable()
     runner.bench_time_func('bm_gc_combined_disabled', benchmark)

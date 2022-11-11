@@ -90,3 +90,14 @@ Stage 4 will then go through and reverse the process of stage 3:
 Stage 5 will go traverse through the tree and delete keys that have dictionaries as values.
 
 Lastly, `all_items` is cleared and then `root` is deleted.
+
+## Executing profilers
+
+```console
+$ PYTHONPERFSUPPORT=1 perf record -F 9999 -g -o perf.data python bm_gc_combined.py
+$ perf script -F +pid > prof.txt
+```
+
+You can then use something like speedscope (`npm install -g speedscope`) to analyse the call-stack for `_Py_RunGC`:
+
+![](speedscope_screenshot.png)
